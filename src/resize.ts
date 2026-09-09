@@ -22,7 +22,7 @@ export async function resizeTo(
   engine.block.setHeight(page, format.height);
   layoutPage(engine, page);
 
-  await engine.scene.zoomToBlock(page, { padding: 40, animate: false });
+  void engine.scene.zoomToBlock(page, { padding: 40, animate: false });
 }
 
 export function currentPage(engine: CreativeEngine): number {

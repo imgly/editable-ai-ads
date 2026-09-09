@@ -33,10 +33,10 @@ export async function composeScene(
   });
   const page = engine.block.findByType('page')[0];
 
-  const background = await addImageBlock(engine, page, parts.background, LAYER.background);
+  const background = addImageBlock(engine, page, parts.background, LAYER.background);
   engine.block.setContentFillMode(background, 'Cover');
 
-  const product = await addImageBlock(engine, page, parts.product, LAYER.product);
+  const product = addImageBlock(engine, page, parts.product, LAYER.product);
   engine.block.setContentFillMode(product, 'Contain');
 
   const headline = engine.block.create('text');
@@ -48,23 +48,36 @@ export async function composeScene(
   engine.block.setHeightMode(headline, 'Auto');
   engine.block.appendChild(page, headline);
 
-  const logo = await addImageBlock(engine, page, parts.logo, LAYER.logo);
+  const logo = addImageBlock(engine, page, parts.logo, LAYER.logo);
   engine.block.setContentFillMode(logo, 'Contain');
-  lockBlock(engine, logo);
+
+  // Step 3: what the user may change. Everything except the logo.
+  setEditable(engine, background, true);
+  setEditable(engine, product, true);
+  setEditable(engine, headline, true);
+  setEditable(engine, logo, false);
 
   layoutPage(engine, page);
-  await engine.scene.zoomToBlock(page, { padding: 40, animate: false });
+  void engine.scene.zoomToBlock(page, { padding: 40, animate: false });
 }
 
-async function addImageBlock(
+/**
+ * A graphic block with an image fill. The source set carries the image
+ * size, so the engine can lay the block out before the pixels arrive.
+ */
+function addImageBlock(
   engine: CreativeEngine,
   page: number,
   image: ImagePart,
   name: string
-): Promise<number> {
-  const block = await engine.block.addImage(image.uri, {
-    size: { width: image.width, height: image.height }
-  });
+): number {
+  const block = engine.block.create('graphic');
+  engine.block.setShape(block, engine.block.createShape('rect'));
+
+  const fill = engine.block.createFill('image');
+  engine.block.setSourceSet(fill, 'fill/image/sourceSet', [image]);
+  engine.block.setFill(block, fill);
+
   engine.block.setName(block, name);
   engine.block.appendChild(page, block);
   return block;
@@ -77,24 +90,32 @@ export function findLayer(engine: CreativeEngine, name: string): number {
   return block;
 }
 
+/** The scopes that decide whether a user can change a block. */
+const EDIT_SCOPES = [
+  'layer/move',
+  'layer/resize',
+  'layer/rotate',
+  'layer/crop',
+  'fill/change',
+  'fill/changeType',
+  'lifecycle/destroy',
+  'lifecycle/duplicate'
+] as const;
+
 /**
- * Turns off every scope that would let a user change the block. The
- * global scope must defer to the block for the block setting to count.
+ * Locks or unlocks one block. The global scope is set to defer to the
+ * block, so each block's own setting decides. Note that once a global
+ * scope defers, every block needs an explicit setting: a block that is
+ * never passed here stays locked.
  */
-export function lockBlock(engine: CreativeEngine, block: number): void {
-  const scopes = [
-    'layer/move',
-    'layer/resize',
-    'layer/rotate',
-    'layer/crop',
-    'fill/change',
-    'fill/changeType',
-    'lifecycle/destroy',
-    'lifecycle/duplicate'
-  ] as const;
-  for (const scope of scopes) {
+export function setEditable(
+  engine: CreativeEngine,
+  block: number,
+  editable: boolean
+): void {
+  for (const scope of EDIT_SCOPES) {
     engine.editor.setGlobalScope(scope, 'Defer');
-    engine.block.setScopeEnabled(block, scope, false);
+    engine.block.setScopeEnabled(block, scope, editable);
   }
 }
 
