@@ -152,7 +152,7 @@ export function AdPanel({ cesdk, credentials }: AdPanelProps) {
     run('Save scene', 0, async () => {
       if (cesdk == null) return;
       const scene = await saveScene(cesdk);
-      download(scene, 'application/json', 'ad.scene');
+      download(scene, 'text/plain', 'ad.scene');
     });
 
   const totalCalls = log.reduce((sum, entry) => sum + entry.modelCalls, 0);

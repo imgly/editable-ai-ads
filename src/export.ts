@@ -40,7 +40,7 @@ export async function exportAllFormats(
   return output;
 }
 
-/** The scene as a string. Store it wherever your designs live. */
+/** The scene as a string (the engine's own compressed format, not JSON). Store it wherever your designs live. */
 export function saveScene(cesdk: CreativeEditorSDK): Promise<string> {
   return cesdk.engine.scene.saveToString();
 }
