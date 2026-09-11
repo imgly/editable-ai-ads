@@ -26,7 +26,7 @@ export async function regenerateBackground(
   const current = await engine.block.export(background, { mimeType: 'image/png' });
   const upload = await client.upload(current, 'image/png');
 
-  // FLUX.2 edit takes `prompt` and `image_urls`; `format: 'auto'` keeps the input size.
+  // NanoBanana Pro Edit takes `prompt` and `image_urls`; `format: 'auto'` keeps the input size.
   const input = await buildInput(client, MODELS.image2image, {
     prompt,
     image_urls: [upload.asset_url],

@@ -17,10 +17,11 @@ import type { GatewayClient } from '@imgly/plugin-ai-generation-web';
 import { BRAND } from './brand';
 import { buildInput } from './gateway';
 
-// Gateway model IDs. Any id from GET https://gateway.img.ly/v1/models works.
+// Gateway model IDs. Any id from GET https://gateway.img.ly/v1/models works;
+// these two image models are on IMG.LY's published model list.
 export const MODELS = {
-  text2image: 'bfl/flux-2',
-  image2image: 'bfl/flux-2-edit',
+  text2image: 'ideogram/v3',
+  image2image: 'google/nano-banana-pro-edit',
   text2text: 'anthropic/claude-sonnet-4.6'
 } as const;
 
@@ -63,10 +64,11 @@ export async function generateBackground(
   client: GatewayClient,
   prompt: string
 ): Promise<ImagePart> {
-  // FLUX.2 takes `format`: 1:1, 1:1-hd, 4:3, 16:9, 3:4, 9:16 or a custom size.
+  // Ideogram V3 takes `format` (1:1, 4:3, 16:9, 3:4, 9:16) and a `style`.
   const input = await buildInput(client, MODELS.text2image, {
     prompt,
-    format: '1:1-hd'
+    format: '1:1',
+    style: 'REALISTIC'
   });
   const uri = await client.generate(MODELS.text2image, input, {});
   return measureImage(uri);

@@ -135,8 +135,8 @@ const CAPABILITIES_BY_MODE: Record<AiEditorMode, AiCapability[]> = {
  */
 export const CURATED_MODELS: Record<AiCapability, string[]> = {
   text2text: ['anthropic/claude-sonnet-4.6'],
-  text2image: ['bfl/flux-2'],
-  image2image: ['bfl/flux-2-edit'],
+  text2image: ['ideogram/v3'],
+  image2image: ['google/nano-banana-pro-edit'],
   text2video: ['google/veo-3.1-fast'],
   image2video: ['google/veo-3.1-fast-i2v'],
   text2speech: ['elevenlabs/eleven-v3-tts'],
