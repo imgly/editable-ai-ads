@@ -63,11 +63,10 @@ export async function generateBackground(
   client: GatewayClient,
   prompt: string
 ): Promise<ImagePart> {
+  // FLUX.2 takes `format`: 1:1, 1:1-hd, 4:3, 16:9, 3:4, 9:16 or a custom size.
   const input = await buildInput(client, MODELS.text2image, {
     prompt,
-    aspect_ratio: '1:1',
-    image_size: 'square_hd',
-    num_images: 1
+    format: '1:1-hd'
   });
   const uri = await client.generate(MODELS.text2image, input, {});
   return measureImage(uri);
@@ -84,11 +83,10 @@ export async function generateHeadline(
     'At most six words. No quotation marks. No punctuation at the end. ' +
     'Reply with the headline only.';
 
-  const input = await buildInput(client, MODELS.text2text, {
-    prompt,
-    messages: [{ role: 'user', content: prompt }],
-    max_tokens: 40
-  });
+  // Text models advertise a `prompt` field, but the gateway's text endpoint
+  // takes chat-style `messages`. The editor's own text provider does this
+  // same mapping before every call.
+  const input = { messages: [{ role: 'user', content: prompt }] };
 
   // The stream yields the accumulated text; the last value is the full reply.
   let text = '';
