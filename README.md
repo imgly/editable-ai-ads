@@ -49,9 +49,10 @@ The panel on the right follows the article's steps.
 
 1. **Generate the parts.** Fill in product, audience and a background prompt, optionally pick your own product photo, and click "Generate parts". That makes two model calls (background image, headline text) and runs background removal in the browser. Without an AI key, click "Use sample parts" instead. The first run downloads the background removal model, which takes a while.
 2. **Compose scene.** The four parts become four named blocks on one page. Click the headline on the canvas and type to change it. Drag the product. Try to move the logo: it is locked.
-3. **Regenerate background.** Enter a new prompt and click the button. One image-to-image call replaces the background block's image. Everything else stays where the user left it.
-4. **Resize.** 1:1, 9:16 and 16:9 re-run the layout on the same blocks. The headline reflows because it is text.
-5. **Export and save.** PNG or PDF of the current format, all three formats in one go, or the scene as JSON for later edits.
+3. **Swap the logo.** Two approved variants from the brand kit. The user cannot replace the logo with any other image; the app can swap it for another approved one.
+4. **Regenerate background.** Enter a new prompt and click the button. One image-to-image call replaces the background block's image. Everything else stays where the user left it.
+5. **Resize.** 1:1, 9:16 and 16:9 re-run the layout on the same blocks. The headline reflows because it is text.
+6. **Export and save.** PNG or PDF of the current format, all three formats in one go, or the scene as JSON for later edits.
 
 The log at the bottom records each step's time and model calls.
 
@@ -60,7 +61,7 @@ The log at the bottom records each step's time and model calls.
 | File | What it does |
 |---|---|
 | `src/generate.ts` | Step 1. Background (text to image), product (upload plus background removal), headline (text model), logo (brand kit). |
-| `src/scene.ts` | Step 2. Turns the parts into blocks, locks the logo, lays out the page. |
+| `src/scene.ts` | Steps 2 and 3. Turns the parts into blocks, sets what is editable, swaps the logo between approved variants, lays out the page. |
 | `src/regenerate-layer.ts` | Step 4. Image-to-image on the background block only. |
 | `src/resize.ts` | Step 5. Page resize plus the layout rules. |
 | `src/export.ts` | Step 6. PNG, PDF, all formats, scene save. |
@@ -79,7 +80,7 @@ Generated image URLs from the gateway are short-lived. A saved scene that still 
 
 ## Sample assets
 
-`public/samples/` holds two Unsplash photos used by the no-key path. `public/brand/logo.png` is a placeholder logo for a made-up brand.
+`public/samples/` holds two Unsplash photos used by the no-key path. `public/brand/logo-dark.png` and `logo-light.png` are placeholder logo variants for a made-up brand.
 
 ## License
 

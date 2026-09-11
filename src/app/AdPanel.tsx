@@ -10,7 +10,7 @@
 import { useCallback, useState } from 'react';
 import type CreativeEditorSDK from '@cesdk/cesdk-js';
 
-import { BRAND } from '../brand';
+import { BRAND, type LogoVariant } from '../brand';
 import {
   download,
   exportAllFormats,
@@ -23,7 +23,7 @@ import { getGatewayClient } from '../gateway';
 import { generateParts, type AdParts } from '../generate';
 import { regenerateBackground } from '../regenerate-layer';
 import { resizeTo } from '../resize';
-import { composeScene } from '../scene';
+import { composeScene, swapLogo } from '../scene';
 import type { CredentialStatus } from './App';
 import { sampleParts, SAMPLE_PRODUCT_URL } from './samples';
 import styles from './AdPanel.module.css';
@@ -110,6 +110,13 @@ export function AdPanel({ cesdk, credentials }: AdPanelProps) {
       if (cesdk == null || parts == null) return;
       await composeScene(cesdk, parts);
       setComposed(true);
+    });
+
+  // Step 3: the only change the logo block accepts, and only from the app.
+  const onSwapLogo = (variant: LogoVariant) =>
+    run(`Swap logo (${variant.label})`, 0, async () => {
+      if (cesdk == null) return;
+      swapLogo(cesdk.engine, variant);
     });
 
   // Step 4
@@ -236,6 +243,26 @@ export function AdPanel({ cesdk, credentials }: AdPanelProps) {
         <p className={styles.hint}>
           Then edit on the canvas: click the headline to change the words,
           drag the product. The logo is locked.
+        </p>
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.heading}>3. Swap the logo (approved variants only)</h2>
+        <div className={styles.buttons}>
+          {BRAND.logos.map((variant) => (
+            <button
+              key={variant.id}
+              type="button"
+              disabled={!composed || busy != null}
+              onClick={() => onSwapLogo(variant)}
+            >
+              {variant.label}
+            </button>
+          ))}
+        </div>
+        <p className={styles.hint}>
+          The user cannot move, resize, delete or replace the logo. The app
+          can swap it for another brand kit variant.
         </p>
       </section>
 

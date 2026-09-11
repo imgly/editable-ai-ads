@@ -10,7 +10,7 @@
 import type CreativeEditorSDK from '@cesdk/cesdk-js';
 import type { CreativeEngine } from '@cesdk/cesdk-js';
 
-import { BRAND } from './brand';
+import { BRAND, type LogoVariant } from './brand';
 import { FORMATS, type AdFormat } from './formats';
 import type { AdParts, ImagePart } from './generate';
 
@@ -75,12 +75,32 @@ function addImageBlock(
   engine.block.setShape(block, engine.block.createShape('rect'));
 
   const fill = engine.block.createFill('image');
-  engine.block.setSourceSet(fill, 'fill/image/sourceSet', [image]);
+  engine.block.setSourceSet(fill, 'fill/image/sourceSet', [toSource(image)]);
   engine.block.setFill(block, fill);
 
   engine.block.setName(block, name);
   engine.block.appendChild(page, block);
   return block;
+}
+
+/**
+ * Step 3: swap the logo for another approved variant.
+ *
+ * The user cannot replace the logo with an arbitrary image (its
+ * `fill/change` scope is off), but the app can. That is the difference
+ * between "locked" and "fixed": the block's position, size and existence
+ * are protected, and the only images that can go into it are the ones
+ * the brand kit approves.
+ */
+export function swapLogo(engine: CreativeEngine, variant: LogoVariant): void {
+  const logo = findLayer(engine, LAYER.logo);
+  const fill = engine.block.getFill(logo);
+  engine.block.setSourceSet(fill, 'fill/image/sourceSet', [toSource(variant)]);
+}
+
+/** The engine accepts exactly uri, width and height in a source set, nothing more. */
+function toSource(image: ImagePart): ImagePart {
+  return { uri: image.uri, width: image.width, height: image.height };
 }
 
 /** Finds a named layer. Throws if the scene was not built by `composeScene`. */
