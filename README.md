@@ -16,13 +16,7 @@ cd editable-ai-ads
 npm install
 ```
 
-Download the CE.SDK engine assets into `public/assets` (fonts, icons, the engine's WebAssembly core):
-
-```bash
-curl -O https://cdn.img.ly/packages/imgly/cesdk-js/1.81.1/imgly-assets.zip
-unzip imgly-assets.zip -d public/
-rm imgly-assets.zip
-```
+The engine assets (fonts, icons, the WebAssembly core) load from IMG.LY's CDN, so there is nothing else to download. To work offline, see `VITE_CESDK_BASE_URL` in `.env.example`.
 
 Create `.env` from the example and fill in the two keys:
 

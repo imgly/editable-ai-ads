@@ -9,13 +9,14 @@ import type { Configuration } from '@cesdk/cesdk-js';
 import { createRoot } from 'react-dom/client';
 
 import App from './app/App';
+import { CESDK_ASSETS_URL } from './config';
 
 const editorConfig: Partial<Configuration> = {
   // From https://img.ly/dashboard. Without it the editor shows a watermark.
   license: import.meta.env.VITE_CESDK_LICENSE,
   userId: 'editable-ai-ads-user',
-  // Engine assets are served from public/assets (see README).
-  baseURL: '/assets'
+  // Engine assets: IMG.LY's CDN by default, see src/config.ts.
+  baseURL: CESDK_ASSETS_URL
 };
 
 const container = document.getElementById('root');

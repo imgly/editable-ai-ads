@@ -10,9 +10,14 @@
 
 import type { Typeface } from '@cesdk/cesdk-js';
 
+import { CESDK_ASSETS_URL } from './config';
+
 // Absolute URLs: CE.SDK resolves relative URIs against its asset baseURL,
 // not against this app's origin.
 const origin = window.location.origin;
+
+// The headline typeface ships with the engine assets.
+const FONT_URI = `${CESDK_ASSETS_URL}/ly.img.typeface/fonts/Archivo/static/Archivo/Archivo-Bold.ttf`;
 
 export interface LogoVariant {
   id: 'dark' | 'light';
@@ -47,12 +52,12 @@ export const BRAND = {
 
   headline: {
     color: { r: 1, g: 1, b: 1, a: 1 },
-    fontUri: `${origin}/assets/ly.img.typeface/fonts/Archivo/static/Archivo/Archivo-Bold.ttf`,
+    fontUri: FONT_URI,
     typeface: {
       name: 'Archivo',
       fonts: [
         {
-          uri: `${origin}/assets/ly.img.typeface/fonts/Archivo/static/Archivo/Archivo-Bold.ttf`,
+          uri: FONT_URI,
           subFamily: 'Bold',
           weight: 'bold',
           style: 'normal'
