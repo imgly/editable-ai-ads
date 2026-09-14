@@ -26,3 +26,6 @@ release/index.html
 
 # CE.SDK engine assets, downloaded per README (large)
 public/assets/
+
+# Playwright MCP scratch
+.playwright-mcp/
