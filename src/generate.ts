@@ -71,7 +71,22 @@ export async function generateBackground(
     style: 'REALISTIC'
   });
   const uri = await client.generate(MODELS.text2image, input, {});
-  return measureImage(uri);
+  return measureImage(await persistImage(uri));
+}
+
+/**
+ * Gateway output URLs are short-lived (they redirect to signed storage
+ * URLs that expire within the hour) and the engine cannot always fetch
+ * them directly. Download the image once and hand the engine a local
+ * object URL. A product would upload the blob to its own storage here
+ * instead, so that saved scenes keep working; see README.
+ */
+export async function persistImage(uri: string): Promise<string> {
+  const response = await fetch(uri);
+  if (!response.ok) {
+    throw new Error(`Could not download generated image (${response.status})`);
+  }
+  return URL.createObjectURL(await response.blob());
 }
 
 /** One text call. The headline is returned as text, never rendered into pixels. */

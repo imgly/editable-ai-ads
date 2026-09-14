@@ -10,7 +10,7 @@ import type CreativeEditorSDK from '@cesdk/cesdk-js';
 import type { GatewayClient } from '@imgly/plugin-ai-generation-web';
 
 import { buildInput } from './gateway';
-import { measureImage, MODELS } from './generate';
+import { measureImage, MODELS, persistImage } from './generate';
 import { findLayer, LAYER } from './scene';
 
 export async function regenerateBackground(
@@ -35,7 +35,7 @@ export async function regenerateBackground(
   const uri = await client.generate(MODELS.image2image, input, {});
 
   // Swap the image on the existing fill. Position, size and stacking order stay.
-  const image = await measureImage(uri);
+  const image = await measureImage(await persistImage(uri));
   const fill = engine.block.getFill(background);
   engine.block.setSourceSet(fill, 'fill/image/sourceSet', [image]);
 }

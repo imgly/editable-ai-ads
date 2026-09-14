@@ -43,7 +43,7 @@ const DEFAULT_BRIEF = {
   productName: `${BRAND.name} over-ear headphones`,
   audience: 'commuters who want quiet',
   backgroundPrompt:
-    'Soft studio backdrop in warm amber tones, gentle gradient light, no text, no objects'
+    'Empty photography studio backdrop, plain wall lit with a warm amber gradient, soft shadows, no objects, no props, no text'
 };
 
 export function AdPanel({ cesdk, credentials }: AdPanelProps) {
