@@ -59,7 +59,7 @@ export default function App({ config }: AppProps) {
 
       const aiAvailable = credentialsRef.current === 'ok';
       const providers = aiAvailable
-        ? createAIProviders('Design', { gatewayUrl: getGatewayUrl() })
+        ? createAIProviders({ gatewayUrl: getGatewayUrl() })
         : {};
       await initEditor(instance, providers);
 

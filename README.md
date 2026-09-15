@@ -11,7 +11,7 @@ Built on the [AI Editor starter kit](https://github.com/imgly/starterkit-ai-edit
 Prerequisites: Node.js 22 or newer, a Chromium, Firefox or Safari release from the last two years.
 
 ```bash
-git clone <this repo>
+git clone https://github.com/graeme10142/editable-ai-ads.git
 cd editable-ai-ads
 npm install
 ```
@@ -46,7 +46,7 @@ The panel on the right follows the article's steps.
 3. **Swap the logo.** Two approved variants from the brand kit. The user cannot replace the logo with any other image; the app can swap it for another approved one.
 4. **Regenerate background.** Enter a new prompt and click the button. One image-to-image call replaces the background block's image. Everything else stays where the user left it.
 5. **Resize.** 1:1, 9:16 and 16:9 re-run the layout on the same blocks. The headline reflows because it is text.
-6. **Export and save.** PNG or PDF of the current format, all three formats in one go, or the scene as JSON for later edits.
+6. **Export and save.** PNG or PDF of the current format, all three formats in one go, or the scene as a string for later edits.
 
 The log at the bottom records each step's time and model calls.
 
@@ -68,14 +68,14 @@ The log at the bottom records each step's time and model calls.
 
 ## About the AI key in the browser
 
-For local use the gateway key is handed to the browser through `{ dangerouslyExposeApiKey }`. Do not ship a public build that way. Mint short-lived tokens from a backend and return them from the `ly.img.ai.getToken` action instead; the pattern is in `src/app/ai-credentials/ai-credentials.ts` and in the [gateway provider docs](https://img.ly/docs/cesdk/js/user-interface/ai-integration/gateway-provider-06df22/).
+For local use the gateway key is handed to the browser through `{ dangerouslyExposeApiKey }`. Vite bakes every `VITE_` variable into the production bundle, so build a public deployment with `VITE_AI_API_KEY` empty. The demo then runs on sample parts. Mint short-lived tokens from a backend and return them from the `ly.img.ai.getToken` action instead; the pattern is in `src/app/ai-credentials/ai-credentials.ts` and in the [gateway provider docs](https://img.ly/docs/cesdk/js/user-interface/ai-integration/gateway-provider-06df22/).
 
 Generated image URLs from the gateway are short-lived. A saved scene that still points at them stops rendering when they expire. A product should re-upload generated images to its own storage before saving; see `uploadMiddleware` in the docs above.
 
 ## Sample assets
 
-`public/samples/` holds two Unsplash photos used by the no-key path. `public/brand/logo-dark.png` and `logo-light.png` are placeholder logo variants for a made-up brand.
+`public/samples/` holds two photos from [Unsplash](https://unsplash.com), used under the [Unsplash License](https://unsplash.com/license), for the no-key path. `public/brand/logo-dark.png` and `logo-light.png` are placeholder logos for a made-up brand.
 
 ## License
 
-MIT, same as the starter kit it is built on.
+The editor configuration in `src/imgly/` and the credential handling in `src/app/ai-credentials/` come from IMG.LY's [AI Editor starter kit](https://github.com/imgly/starterkit-ai-editor-react-web). CE.SDK itself needs a license from IMG.LY: see [img.ly/pricing](https://img.ly/pricing).

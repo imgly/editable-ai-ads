@@ -38,11 +38,7 @@ import type { AiProviderMap } from './plugins/ai-providers';
 
 export { DesignEditorConfig } from './config/design-editor/plugin';
 export { AiAppsConfig } from './plugins/ai-apps';
-export {
-  CURATED_MODELS,
-  createAIProviders,
-  instantiateGatewayProvider
-} from './plugins/ai-providers';
+export { createAIProviders } from './plugins/ai-providers';
 export type {
   AiCapability,
   AiProviderMap,
@@ -87,6 +83,6 @@ export async function initEditor(
   );
 
   if (Object.keys(providers).length > 0) {
-    await cesdk.addPlugin(new AiAppsConfig(providers, 'Design'));
+    await cesdk.addPlugin(new AiAppsConfig(providers));
   }
 }
