@@ -123,3 +123,29 @@
   padding-left: 1rem;
   color: #4b5563;
 }
+
+.keysHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.linkButton {
+  border: 0;
+  background: none;
+  color: #1f2937;
+  text-decoration: underline;
+  font-size: 0.875rem;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.5rem;
+  color: #4b5563;
+}
+
+.checkbox input {
+  width: auto;
+}

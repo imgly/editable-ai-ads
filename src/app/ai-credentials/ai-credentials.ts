@@ -5,21 +5,25 @@
  * code in `src/generate.ts`, gets its credential from one place: the
  * `ly.img.ai.getToken` action registered here.
  *
- * Local development only: this file reads `VITE_AI_API_KEY` from `.env`
- * and hands the raw key to the browser as `{ dangerouslyExposeApiKey }`.
- * Vite bakes `VITE_` variables into the bundle, so never build a public
- * deployment with the key set. For production, mint a short-lived token
- * on your backend and return that string from `resolveAiToken` instead:
+ * The key comes from `src/app/settings.ts`: pasted into the app and kept
+ * in this browser, or read from `VITE_AI_API_KEY` in `.env`. Either way
+ * it is handed to the browser as `{ dangerouslyExposeApiKey }`, which is
+ * fine for a person using their own key on their own machine. Vite bakes
+ * `VITE_` variables into the bundle, so never build a public deployment
+ * with the key set. For a product, mint a short-lived token on your
+ * backend and return that string from `resolveAiToken` instead:
  * https://img.ly/docs/cesdk/js/user-interface/ai-integration/gateway-provider-06df22/
  */
 
 import type CreativeEditorSDK from '@cesdk/cesdk-js';
 
+import { getGatewayKey } from '../settings';
+
 const DEFAULT_GATEWAY_URL = 'https://gateway.img.ly';
 
+/** A key pasted into the app wins over `VITE_AI_API_KEY` from `.env`. */
 function getApiKey(): string | undefined {
-  const key = import.meta.env.VITE_AI_API_KEY as string | undefined;
-  return typeof key === 'string' && key.length > 0 ? key : undefined;
+  return getGatewayKey();
 }
 
 /**

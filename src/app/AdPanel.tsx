@@ -7,7 +7,7 @@
  * screen.
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import type CreativeEditorSDK from '@cesdk/cesdk-js';
 
 import { BRAND, type LogoVariant } from '../brand';
@@ -31,6 +31,8 @@ import styles from './AdPanel.module.css';
 interface AdPanelProps {
   cesdk: CreativeEditorSDK | null;
   credentials: CredentialStatus;
+  /** The keys section, rendered at the top of the panel. */
+  settings?: ReactNode;
 }
 
 interface LogEntry {
@@ -46,7 +48,7 @@ const DEFAULT_BRIEF = {
     'Empty photography studio backdrop, plain wall lit with a warm amber gradient, soft shadows, no objects, no props, no text'
 };
 
-export function AdPanel({ cesdk, credentials }: AdPanelProps) {
+export function AdPanel({ cesdk, credentials, settings }: AdPanelProps) {
   const [brief, setBrief] = useState(DEFAULT_BRIEF);
   const [productFile, setProductFile] = useState<File | null>(null);
   const [regeneratePrompt, setRegeneratePrompt] = useState(
@@ -171,6 +173,8 @@ export function AdPanel({ cesdk, credentials }: AdPanelProps) {
       <p className={styles.status} data-status={credentials}>
         {credentialLabel(credentials)}
       </p>
+
+      {settings}
 
       <section className={styles.section}>
         <h2 className={styles.heading}>1. Generate the parts</h2>
@@ -369,9 +373,9 @@ function credentialLabel(status: CredentialStatus): string {
     case 'ok':
       return 'AI gateway connected';
     case 'missing':
-      return 'No AI key set (VITE_AI_API_KEY). Sample parts still work.';
+      return 'No AI key. Add one under Keys, or use sample parts.';
     case 'invalid':
-      return 'The gateway rejected the AI key. Sample parts still work.';
+      return 'The gateway rejected the AI key. Fix it under Keys, or use sample parts.';
     case 'unreachable':
       return 'AI gateway unreachable. Sample parts still work.';
   }

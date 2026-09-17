@@ -18,17 +18,6 @@ npm install
 
 The engine assets (fonts, icons, the WebAssembly core) load from IMG.LY's CDN, so there is nothing else to download. To work offline, see `VITE_CESDK_BASE_URL` in `.env.example`.
 
-Create `.env` from the example and fill in the two keys:
-
-```bash
-cp .env.example .env
-```
-
-| Variable | What it is | Without it |
-|---|---|---|
-| `VITE_CESDK_LICENSE` | CE.SDK license key from the [IMG.LY dashboard](https://img.ly/dashboard) | The editor runs with a watermark |
-| `VITE_AI_API_KEY` | IMG.LY AI Gateway key (`sk_...`) from the same dashboard | The "Generate parts" and "Regenerate background" buttons are disabled. "Use sample parts" still works, including real background removal |
-
 Then:
 
 ```bash
@@ -36,6 +25,21 @@ npm run dev
 ```
 
 Open http://localhost:5173.
+
+## Keys
+
+The app needs two keys from the [IMG.LY dashboard](https://img.ly/dashboard), and there are two ways to give them to it.
+
+**In the app.** Open the Keys section at the top of the panel, paste the keys and click "Save and restart editor". They are stored in that browser's localStorage only and sent only to IMG.LY's servers. This is how a visitor to a hosted copy of the demo uses their own keys.
+
+**In `.env`**, for local development. Copy `.env.example` to `.env` and fill in the values. A key pasted into the app wins over `.env`.
+
+| Key | What it is | Without it |
+|---|---|---|
+| CE.SDK license (`VITE_CESDK_LICENSE`) | Licenses the editor. Trial licenses are bound to the hostnames you register | The editor runs with a watermark |
+| AI gateway key (`VITE_AI_API_KEY`, `sk_...`) | Pays for model calls, in credits | The "Generate parts" and "Regenerate background" buttons are disabled. "Use sample parts" still works, including real background removal |
+
+Before the editor starts, the app checks the license with IMG.LY's licensing server. A rejected key, for example a trial license used on a hostname it does not cover, is reported in the Keys section and the editor starts with a watermark instead of failing to load.
 
 ## What to click
 
@@ -63,12 +67,14 @@ The log at the bottom records each step's time and model calls.
 | `src/brand.ts` | The brand kit: logo, typeface, headline color. |
 | `src/formats.ts` | The three output sizes. |
 | `src/app/AdPanel.tsx` | The panel that calls the steps. |
-| `src/app/ai-credentials/` | Credential handling from the starter kit. |
+| `src/app/settings.ts` | Where the two keys come from: pasted into the app, or `.env`. License check against IMG.LY's server. |
+| `src/app/KeysPanel.tsx` | The Keys section of the panel. |
+| `src/app/ai-credentials/` | Hands the gateway key to the AI plugins, from the starter kit. |
 | `src/imgly/` | Editor configuration from the starter kit, trimmed to design mode. |
 
 ## About the AI key in the browser
 
-For local use the gateway key is handed to the browser through `{ dangerouslyExposeApiKey }`. Vite bakes every `VITE_` variable into the production bundle, so build a public deployment with `VITE_AI_API_KEY` empty. The demo then runs on sample parts. Mint short-lived tokens from a backend and return them from the `ly.img.ai.getToken` action instead; the pattern is in `src/app/ai-credentials/ai-credentials.ts` and in the [gateway provider docs](https://img.ly/docs/cesdk/js/user-interface/ai-integration/gateway-provider-06df22/).
+The gateway key is handed to the browser through `{ dangerouslyExposeApiKey }`, which is fine when a person uses their own key on their own machine. Vite bakes every `VITE_` variable into the production bundle, so build a public deployment with `VITE_AI_API_KEY` empty: visitors then paste their own key under Keys, or use sample parts. Mint short-lived tokens from a backend and return them from the `ly.img.ai.getToken` action instead; the pattern is in `src/app/ai-credentials/ai-credentials.ts` and in the [gateway provider docs](https://img.ly/docs/cesdk/js/user-interface/ai-integration/gateway-provider-06df22/).
 
 Generated image URLs from the gateway are short-lived. A saved scene that still points at them stops rendering when they expire. A product should re-upload generated images to its own storage before saving; see `uploadMiddleware` in the docs above.
 
