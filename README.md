@@ -50,9 +50,9 @@ The panel on the right follows the article's steps.
 3. **Swap the logo.** Two approved variants from the brand kit. The user cannot replace the logo with any other image; the app can swap it for another approved one.
 4. **Regenerate background.** Enter a new prompt and click the button. One image-to-image call replaces the background block's image. Everything else stays where the user left it.
 5. **Resize.** 1:1, 9:16 and 16:9 re-run the layout on the same blocks. The headline reflows because it is text.
-6. **Export and save.** PNG or PDF of the current format, all three formats in one go, or the scene as a string for later edits.
+6. **Export and save.** PNG or PDF of the current format, all three formats in one go, or the whole design as a `.zip` archive you can load back into the editor later.
 
-The log at the bottom records each step's time and model calls.
+The log at the bottom records each step's time and the model calls it actually made, counted by the gateway client rather than assumed.
 
 ## Where the code is
 
@@ -62,8 +62,8 @@ The log at the bottom records each step's time and model calls.
 | `src/scene.ts` | Steps 2 and 3. Turns the parts into blocks, sets what is editable, swaps the logo between approved variants, lays out the page. |
 | `src/regenerate-layer.ts` | Step 4. Image-to-image on the background block only. |
 | `src/resize.ts` | Step 5. Page resize plus the layout rules. |
-| `src/export.ts` | Step 6. PNG, PDF, all formats, scene save. |
-| `src/gateway.ts` | Gateway client for generation outside the editor UI. |
+| `src/export.ts` | Step 6. PNG, PDF, all three formats, archive save. |
+| `src/gateway.ts` | Gateway client for generation outside the editor UI, and the model call counter. |
 | `src/brand.ts` | The brand kit: logo, typeface, headline color. |
 | `src/formats.ts` | The three output sizes. |
 | `src/app/AdPanel.tsx` | The panel that calls the steps. |
@@ -76,7 +76,9 @@ The log at the bottom records each step's time and model calls.
 
 The gateway key is handed to the browser through `{ dangerouslyExposeApiKey }`, which is fine when a person uses their own key on their own machine. Vite bakes every `VITE_` variable into the production bundle, so build a public deployment with `VITE_AI_API_KEY` empty: visitors then paste their own key under Keys, or use sample parts. Mint short-lived tokens from a backend and return them from the `ly.img.ai.getToken` action instead; the pattern is in `src/app/ai-credentials/ai-credentials.ts` and in the [gateway provider docs](https://img.ly/docs/cesdk/js/user-interface/ai-integration/gateway-provider-06df22/).
 
-Generated image URLs from the gateway are short-lived. A saved scene that still points at them stops rendering when they expire. A product should re-upload generated images to its own storage before saving; see `uploadMiddleware` in the docs above.
+Generated image URLs from the gateway are short-lived: they redirect to signed storage that expires within the hour, so the demo downloads each generated image immediately and hands the engine an in-memory `blob:` URL instead (`persistImage` in `src/generate.ts`).
+
+That has a consequence for saving. A scene saved as text only *references* its images, and a `blob:` URL dies with the tab, so such a file will not render again after a reload. The demo therefore saves a `.zip` archive, which embeds the pixels. A product does neither: it re-uploads generated images to its own storage and then saves the scene by reference. See `uploadMiddleware` in the docs above.
 
 ## Sample assets
 

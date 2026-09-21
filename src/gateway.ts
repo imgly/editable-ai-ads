@@ -6,6 +6,10 @@
  * that happens outside the editor UI (see `generate.ts` and
  * `regenerate-layer.ts`). Both paths use the credential registered in
  * `app/ai-credentials`, so there is exactly one place a key lives.
+ *
+ * The client also counts generation calls. The article's claim is about
+ * how many times a model runs, so the panel reports a measured number
+ * rather than a number typed into the source.
  */
 
 import {
@@ -20,14 +24,48 @@ import {
 } from './app/ai-credentials';
 
 let client: GatewayClient | null = null;
+let modelCalls = 0;
+
+/**
+ * How many model calls this client has made since the page loaded.
+ *
+ * Counts the article's steps only. The editor's own AI panels build their
+ * own clients inside the gateway providers, so generations started from
+ * the canvas do not land here.
+ */
+export function modelCallCount(): number {
+  return modelCalls;
+}
 
 export function getGatewayClient(): GatewayClient {
   if (client == null) {
-    client = createGatewayClient(getGatewayUrl(), async () =>
-      bearerFromTokenResult(await resolveAiToken())
+    client = counting(
+      createGatewayClient(getGatewayUrl(), async () =>
+        bearerFromTokenResult(await resolveAiToken())
+      )
     );
   }
   return client;
+}
+
+/**
+ * Wraps a client so every generation increments the counter. `fetchSchema`
+ * and `upload` are not counted: they are gateway bookkeeping, not model
+ * runs, and nothing bills for them.
+ */
+function counting(inner: GatewayClient): GatewayClient {
+  return {
+    fetchSchema: inner.fetchSchema,
+    upload: inner.upload,
+    generate: (modelId, input, options) => {
+      modelCalls += 1;
+      return inner.generate(modelId, input, options);
+    },
+    generateStream: (modelId, input, options) => {
+      modelCalls += 1;
+      return inner.generateStream(modelId, input, options);
+    }
+  };
 }
 
 /**
@@ -45,14 +83,16 @@ export async function buildInput(
   candidate: Record<string, unknown>
 ): Promise<Record<string, unknown>> {
   const schema = await client.fetchSchema(modelId);
-  const allowed = new Set(Object.keys(schema.input_schema.properties));
+  const allowed = new Set(Object.keys(schema.input_schema.properties ?? {}));
 
   const input: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(candidate)) {
     if (allowed.has(key)) input[key] = value;
   }
 
-  const missing = schema.input_schema.required.filter((key) => !(key in input));
+  // `required` is optional in practice, even though the type says otherwise.
+  const required = schema.input_schema.required ?? [];
+  const missing = required.filter((key) => !(key in input));
   if (missing.length > 0) {
     throw new Error(
       `Model ${modelId} requires fields this app does not provide: ${missing.join(', ')}`

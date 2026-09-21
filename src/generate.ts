@@ -123,17 +123,46 @@ export async function cutOutProduct(image: Blob | string): Promise<ImagePart> {
 /**
  * Crops transparent margins off a cutout so the block that holds it is
  * the size of the product, not the size of the original photo.
+ *
+ * The transparent edges are found on a thumbnail, not on the full image:
+ * a phone photo is ~12 megapixels, and scanning every pixel of it on the
+ * main thread stalls the tab for a noticeable moment. The crop itself
+ * still happens at full resolution, with a one-thumbnail-pixel margin so
+ * rounding never eats into the product.
  */
+const BOUNDS_SCAN_SIZE = 512;
+
 async function cropToContent(image: Blob): Promise<Blob> {
   const bitmap = await createImageBitmap(image);
-  const canvas = document.createElement('canvas');
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
-  const context = canvas.getContext('2d');
-  if (context == null) return image;
-  context.drawImage(bitmap, 0, 0);
+  const bounds = findOpaqueBounds(bitmap);
+  if (bounds == null) return image;
 
-  const { data, width, height } = context.getImageData(0, 0, bitmap.width, bitmap.height);
+  const crop = document.createElement('canvas');
+  crop.width = bounds.width;
+  crop.height = bounds.height;
+  crop.getContext('2d')?.drawImage(bitmap, -bounds.left, -bounds.top);
+  return new Promise((resolve) =>
+    crop.toBlob((blob) => resolve(blob ?? image), 'image/png')
+  );
+}
+
+/** The bounding box of everything not transparent, in full-image pixels. */
+function findOpaqueBounds(bitmap: ImageBitmap) {
+  const scale = Math.min(
+    1,
+    BOUNDS_SCAN_SIZE / Math.max(bitmap.width, bitmap.height)
+  );
+  const width = Math.max(1, Math.round(bitmap.width * scale));
+  const height = Math.max(1, Math.round(bitmap.height * scale));
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (context == null) return null;
+  context.drawImage(bitmap, 0, 0, width, height);
+
+  const { data } = context.getImageData(0, 0, width, height);
   let left = width, top = height, right = -1, bottom = -1;
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
@@ -145,15 +174,16 @@ async function cropToContent(image: Blob): Promise<Blob> {
       }
     }
   }
-  if (right < 0) return image;
+  if (right < 0) return null;
 
-  const crop = document.createElement('canvas');
-  crop.width = right - left + 1;
-  crop.height = bottom - top + 1;
-  crop.getContext('2d')?.drawImage(canvas, -left, -top);
-  return new Promise((resolve) =>
-    crop.toBlob((blob) => resolve(blob ?? image), 'image/png')
-  );
+  // Back to full-image pixels, padded by one thumbnail pixel each side.
+  const pad = 1 / scale;
+  const x0 = Math.max(0, Math.floor(left / scale - pad));
+  const y0 = Math.max(0, Math.floor(top / scale - pad));
+  const x1 = Math.min(bitmap.width, Math.ceil((right + 1) / scale + pad));
+  const y1 = Math.min(bitmap.height, Math.ceil((bottom + 1) / scale + pad));
+
+  return { left: x0, top: y0, width: x1 - x0, height: y1 - y0 };
 }
 
 /** Loads an image once to learn its size. The engine needs width and height for layout. */

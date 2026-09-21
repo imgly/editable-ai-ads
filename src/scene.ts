@@ -96,11 +96,31 @@ export function swapLogo(engine: CreativeEngine, variant: LogoVariant): void {
   const logo = findLayer(engine, LAYER.logo);
   const fill = engine.block.getFill(logo);
   engine.block.setSourceSet(fill, 'fill/image/sourceSet', [toSource(variant)]);
+
+  // A variant with a different aspect ratio needs a new box, not a squeeze.
+  // Only the logo is re-placed: anything the user moved stays where it is.
+  const page = engine.block.getParent(logo);
+  if (page != null) placeLogo(engine, page, logo);
 }
 
 /** The engine accepts exactly uri, width and height in a source set, nothing more. */
 function toSource(image: ImagePart): ImagePart {
   return { uri: image.uri, width: image.width, height: image.height };
+}
+
+/**
+ * Which brand kit variant is in the logo block right now.
+ *
+ * Read back from the block rather than tracked in a variable, so `swapLogo`
+ * and `layoutPage` cannot drift apart. Variants may have different aspect
+ * ratios, and the layout needs the one that is actually there.
+ */
+function logoVariant(engine: CreativeEngine, logo: number): LogoVariant {
+  const [source] = engine.block.getSourceSet(
+    engine.block.getFill(logo),
+    'fill/image/sourceSet'
+  );
+  return BRAND.logos.find((v) => v.uri === source?.uri) ?? BRAND.logo;
 }
 
 /** Finds a named layer. Throws if the scene was not built by `composeScene`. */
@@ -153,10 +173,7 @@ export function layoutPage(engine: CreativeEngine, page: number): void {
 
   place(engine, findLayer(engine, LAYER.background), 0, 0, width, height);
 
-  // Logo: top right, always the same share of the width.
-  const logoWidth = width * 0.22;
-  const logoHeight = logoWidth * (BRAND.logo.height / BRAND.logo.width);
-  place(engine, findLayer(engine, LAYER.logo), width - margin - logoWidth, margin, logoWidth, logoHeight);
+  const logoHeight = placeLogo(engine, page, findLayer(engine, LAYER.logo));
 
   const headline = findLayer(engine, LAYER.headline);
   const product = findLayer(engine, LAYER.product);
@@ -179,6 +196,27 @@ export function layoutPage(engine: CreativeEngine, page: number): void {
     const top = margin + logoHeight;
     place(engine, product, width * 0.52, top, width * 0.48 - margin, height - top - margin);
   }
+}
+
+/**
+ * Logo: top right, always the same share of the page width. Returns its
+ * height, which the headline's position depends on.
+ */
+function placeLogo(
+  engine: CreativeEngine,
+  page: number,
+  logo: number
+): number {
+  const width = engine.block.getWidth(page);
+  const height = engine.block.getHeight(page);
+  const margin = Math.round(Math.min(width, height) * 0.06);
+
+  const variant = logoVariant(engine, logo);
+  const logoWidth = width * 0.22;
+  const logoHeight = logoWidth * (variant.height / variant.width);
+
+  place(engine, logo, width - margin - logoWidth, margin, logoWidth, logoHeight);
+  return logoHeight;
 }
 
 function place(

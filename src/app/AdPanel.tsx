@@ -13,13 +13,14 @@ import type CreativeEditorSDK from '@cesdk/cesdk-js';
 import { BRAND, type LogoVariant } from '../brand';
 import {
   download,
+  downloadAll,
   exportAllFormats,
   exportPdf,
   exportPng,
-  saveScene
+  saveArchive
 } from '../export';
 import { FORMATS, type AdFormat } from '../formats';
-import { getGatewayClient } from '../gateway';
+import { getGatewayClient, modelCallCount } from '../gateway';
 import { generateParts, type AdParts } from '../generate';
 import { regenerateBackground } from '../regenerate-layer';
 import { resizeTo } from '../resize';
@@ -63,34 +64,39 @@ export function AdPanel({ cesdk, credentials, settings }: AdPanelProps) {
   const aiAvailable = credentials === 'ok';
   const ready = cesdk != null;
 
-  /** Runs one step, times it, records the model calls it used. */
-  const run = useCallback(
-    async (label: string, modelCalls: number, step: () => Promise<void>) => {
-      setBusy(label);
-      setError(null);
-      const started = performance.now();
-      try {
-        await step();
-        setLog((entries) => [
-          { label, ms: Math.round(performance.now() - started), modelCalls },
-          ...entries
-        ]);
-      } catch (cause) {
-        console.error(`[editable-ai-ads] ${label} failed:`, cause);
-        setError(cause instanceof Error ? cause.message : String(cause));
-      } finally {
-        setBusy(null);
-      }
-    },
-    []
-  );
+  /**
+   * Runs one step, times it, and counts the model calls it actually made
+   * by reading the gateway client's counter before and after.
+   */
+  const run = useCallback(async (label: string, step: () => Promise<void>) => {
+    setBusy(label);
+    setError(null);
+    const started = performance.now();
+    const callsBefore = modelCallCount();
+    try {
+      await step();
+      setLog((entries) => [
+        {
+          label,
+          ms: Math.round(performance.now() - started),
+          modelCalls: modelCallCount() - callsBefore
+        },
+        ...entries
+      ]);
+    } catch (cause) {
+      console.error(`[editable-ai-ads] ${label} failed:`, cause);
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setBusy(null);
+    }
+  }, []);
 
   const productImage = async (): Promise<Blob> =>
     productFile ?? (await fetch(SAMPLE_PRODUCT_URL)).blob();
 
   // Step 1, AI path: background + headline are model calls, cutout is local.
   const onGenerate = () =>
-    run('Generate parts', 2, async () => {
+    run('Generate parts', async () => {
       const generated = await generateParts(getGatewayClient(), {
         ...brief,
         productImage: await productImage()
@@ -101,14 +107,14 @@ export function AdPanel({ cesdk, credentials, settings }: AdPanelProps) {
 
   // Step 1, no-key path: stock background, fixed headline, real cutout.
   const onSample = () =>
-    run('Sample parts', 0, async () => {
+    run('Sample parts', async () => {
       setParts(await sampleParts());
       setComposed(false);
     });
 
   // Step 2
   const onCompose = () =>
-    run('Compose scene', 0, async () => {
+    run('Compose scene', async () => {
       if (cesdk == null || parts == null) return;
       await composeScene(cesdk, parts);
       setComposed(true);
@@ -116,52 +122,57 @@ export function AdPanel({ cesdk, credentials, settings }: AdPanelProps) {
 
   // Step 3: the only change the logo block accepts, and only from the app.
   const onSwapLogo = (variant: LogoVariant) =>
-    run(`Swap logo (${variant.label})`, 0, async () => {
+    run(`Swap logo (${variant.label})`, async () => {
       if (cesdk == null) return;
       swapLogo(cesdk.engine, variant);
     });
 
   // Step 4
   const onRegenerate = () =>
-    run('Regenerate background only', 1, async () => {
+    run('Regenerate background only', async () => {
       if (cesdk == null) return;
       await regenerateBackground(cesdk, getGatewayClient(), regeneratePrompt);
     });
 
   // Step 5
   const onResize = (format: AdFormat) =>
-    run(`Resize to ${format.label}`, 0, async () => {
+    run(`Resize to ${format.label}`, async () => {
       if (cesdk == null) return;
       await resizeTo(cesdk, format);
     });
 
   // Step 6
   const onExportPng = () =>
-    run('Export PNG', 0, async () => {
+    run('Export PNG', async () => {
       if (cesdk == null) return;
       download(await exportPng(cesdk), 'image/png', 'ad.png');
     });
 
   const onExportPdf = () =>
-    run('Export PDF', 0, async () => {
+    run('Export PDF', async () => {
       if (cesdk == null) return;
       download(await exportPdf(cesdk), 'application/pdf', 'ad.pdf');
     });
 
   const onExportAll = () =>
-    run('Export 1:1, 9:16, 16:9', 0, async () => {
+    run('Export 1:1, 9:16, 16:9', async () => {
       if (cesdk == null) return;
       const blobs = await exportAllFormats(cesdk);
-      for (const format of Object.values(FORMATS)) {
-        download(blobs[format.id], 'image/png', `ad-${format.id}.png`);
-      }
+      await downloadAll(
+        Object.values(FORMATS).map((format) => ({
+          data: blobs[format.id],
+          mimeType: 'image/png',
+          filename: `ad-${format.id}.png`
+        }))
+      );
     });
 
+  // Archive, not a bare scene: it embeds the images, so the file still
+  // opens after the blob: URLs behind the generated parts are gone.
   const onSave = () =>
-    run('Save scene', 0, async () => {
+    run('Save archive', async () => {
       if (cesdk == null) return;
-      const scene = await saveScene(cesdk);
-      download(scene, 'text/plain', 'ad.scene');
+      download(await saveArchive(cesdk), 'application/zip', 'ad.zip');
     });
 
   const totalCalls = log.reduce((sum, entry) => sum + entry.modelCalls, 0);
@@ -320,7 +331,7 @@ export function AdPanel({ cesdk, credentials, settings }: AdPanelProps) {
             All three formats
           </button>
           <button type="button" disabled={!composed || busy != null} onClick={onSave}>
-            Save scene
+            Save archive
           </button>
         </div>
       </section>
