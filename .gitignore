@@ -6,23 +6,8 @@
 dist/
 node_modules/
 
-# Lock files (use npm ci in CI)
-yarn.lock
+# TypeScript incremental build info
 tsconfig.tsbuildinfo
-
-# Auto-generated TypeScript config for local development
-tsconfig.local.json
-
-# Release - generated files (keep only template files: package.json, tsconfig.json, vite.config.ts, src/index.tsx)
-release/src/app/
-release/src/imgly/
-release/public/
-release/README.md
-release/.env.example
-release/.eslintrc.js
-release/LICENSE
-release/hero.webp
-release/index.html
 
 # CE.SDK engine assets, downloaded per README (large)
 public/assets/
