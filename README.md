@@ -1,6 +1,6 @@
 # Editable AI ads
 
-Reference implementation for the IMG.LY article "How to edit AI-generated designs without regenerating them".
+Reference implementation for the IMG.LY article ["How to edit AI-generated designs without regenerating them"](https://img.ly/blog/edit-ai-output-without-regenerating/).
 
 The idea: generate the layers, not the picture. An ad is built from four parts (background, product cutout, headline, logo) that each become their own block in a [CE.SDK](https://img.ly/creative-sdk) scene. The user then edits the headline as text, moves the product, regenerates only the background, and resizes to three formats, with no second generation of the whole image.
 
@@ -11,7 +11,7 @@ Built on the [AI Editor starter kit](https://github.com/imgly/starterkit-ai-edit
 Prerequisites: Node.js 22 or newer, a Chromium, Firefox or Safari release from the last two years.
 
 ```bash
-git clone https://github.com/graeme10142/editable-ai-ads.git
+git clone https://github.com/imgly/editable-ai-ads.git
 cd editable-ai-ads
 npm install
 ```
