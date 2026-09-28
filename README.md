@@ -1,6 +1,6 @@
 # Editable AI ads
 
-Reference implementation for the IMG.LY article ["How to edit AI-generated designs without regenerating them"](https://img.ly/blog/edit-ai-output-without-regenerating/).
+Reference implementation for the IMG.LY article ["How to edit AI-generated designs without regenerating them"](https://img.ly/blog/edit-ai-output-without-regenerating/). A hosted copy runs at [labs.imgly.dev/p/r24dbfde_editable-ai-ads](https://labs.imgly.dev/p/r24dbfde_editable-ai-ads).
 
 The idea: generate the layers, not the picture. An ad is built from four parts (background, product cutout, headline, logo) that each become their own block in a [CE.SDK](https://img.ly/creative-sdk) scene. The user then edits the headline as text, moves the product, regenerates only the background, and resizes to three formats, with no second generation of the whole image.
 
